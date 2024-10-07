@@ -3,3 +3,6 @@ start-redpanda:
 
 stop-redpanda:
 	podman-compose -f redpanda.yml stop
+
+start-redpanda_1:
+	podman-compose -f redpanda.yml start
