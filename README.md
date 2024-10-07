@@ -1,2 +1,2 @@
 # Real-Time-ML
-Base Directory for Real TIme ML project
+Base Directory for Real Time ML project
