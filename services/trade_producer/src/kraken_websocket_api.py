@@ -1,7 +1,14 @@
 from typing import List
 from loguru import logger
 from websocket import create_connection
-import json
+import json 
+from pydantic import BaseModel
+
+class Trade(BaseModel):
+    product_id: str
+    quantity: float
+    price: float
+    timestamp_ms: int 
 
 class KrakenWebsocketAPI:
 
@@ -23,7 +30,7 @@ class KrakenWebsocketAPI:
         self._subscribe(product_id)
 
     def _subscribe(self, product_id:str):
-        logger.info('Subscribing to the trades for {product_id}')
+        logger.info(f'Subscribing to the trades for {product_id}')
         msg = {
             'method': 'subscribe',
             'params': {
@@ -49,12 +56,43 @@ class KrakenWebsocketAPI:
             return []
         
         message = json.loads(message)
+        
 
         trades=[]
+        
         for trade in message['data']:
-            breakpoint()
+            trades.append(
+                Trade(
+                        product_id=trade['symbol'],
+                        price=trade['price'],
+                        quantity=trade['qty'],
+                        timestamp_ms=self.to_ms(trade['timestamp'])
+                    )
+            )
         
         return trades
+    
+    @staticmethod
+    def to_ms(timestamp: str) -> int:
+        """
+        A function that transforms a timestamps expressed
+        as a string like this '2024-06-17T09:36:39.467866Z'
+        into a timestamp expressed in milliseconds.
+
+        Args:
+            timestamp (str): A timestamp expressed as a string.
+
+        Returns:
+            int: A timestamp expressed in milliseconds.
+        """
+        # parse a string like this '2024-06-17T09:36:39.467866Z'
+        # into a datetime object assuming UTC timezone
+        # and then transform this datetime object into Unix timestamp
+        # expressed in milliseconds
+        from datetime import datetime, timezone
+
+        timestamp = datetime.fromisoformat(timestamp[:-1]).replace(tzinfo=timezone.utc)
+        return int(timestamp.timestamp() * 1000)
 
     def is_done(self) -> bool:
         """Returns true if Kraken WS API connection is closed"""
